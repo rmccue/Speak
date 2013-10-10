@@ -19,20 +19,21 @@ Goals
 
 Design
 ------
-All data in Speak is implemented based on one of three post types:
+All data in Speak is implemented based on one of three types:
 
-* Strings: The basic unit of translation is the String. Any data that can be
-  translated is represented as a String. Strings can have a parent String, which
-  is called the "base" or "original" string.
+* Strings: The basic unit of translation is the String post type. Any data that
+  can be translated is represented as a String. Strings can have a parent
+  String, which is called the "base" or "original" string.
 
-* Projects: A Project is a collection of Strings, grouped together based on a
-  common source. Projects can have parent Projects.
+* Projects: The Project post type is used to group Strings that relate to a
+  common source. Projects have child Strings, and can have parent Projects.
 
-* Languages: A Language is a collection of Strings, grouped together based on
-  the translation. Each Language (except one) has a parent Language, and all
-  Strings associated with a Language are automatically copied (using
-  copy-on-write) from the parent. A Language without a parent is the "default"
-  Language, and does not inherit strings.
+* Languages: The Language taxonomy is used to group Strings translated into a
+  certain language together. Strings associated with a Language are
+  automatically copied (using copy-on-write) from the parent to speed up
+  translation of dialects. Languages without a parents inherit Strings from the
+  "default" Language, and the default Language contains the canonical source
+  String values.
 
 There also exist some common views:
 
@@ -41,6 +42,10 @@ There also exist some common views:
   sparse set, as not all Strings for a project may have been translated. If a
   String has not been translated, the Translation Set will show the parent
   Language's translation.
+
+  (That is, for a project "Example" and language "Foobar": all Strings with
+  their parent Project set to Example, and belonging to the language
+  term "Foobar")
 
 Contributing
 ------------
