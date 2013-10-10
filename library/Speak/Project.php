@@ -15,7 +15,7 @@ class Project extends Post {
 	 */
 	public function import(array $strings, Language $language = null) {
 		if ( empty( $language ) ) {
-			$language = Language::default();
+			$language = Language::get_default();
 		}
 
 		foreach ($strings as $string) {

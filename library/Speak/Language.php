@@ -3,7 +3,13 @@
 namespace Speak;
 
 class Language extends Post {
-	public static function default() {
+	/**
+	 * Get the default language
+	 *
+	 * @internal `default` would be a better name here, but it's a parser token, so we can't work around that.
+	 * @return Language
+	 */
+	public static function get_default() {
 		$id = get_option( 'speak_language_default', 'english' );
 		$post = get_post( $id );
 		return new Language( $post );
