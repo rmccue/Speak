@@ -8,6 +8,43 @@ class Project extends Post {
 	}
 
 	/**
+	 * Import strings into a project
+	 *
+	 * @param array $strings List of String objects. Strings will be inserted if not already in the database
+	 * @param Language|null $language Language object, null to use the default language
+	 */
+	public function import(array $strings, Language $language = null) {
+		if ( empty( $language ) ) {
+			$language = Language::default();
+		}
+
+		foreach ($strings as $string) {
+			if ( ! is_a( $string, __NAMESPACE__ . '\\String' ) ) {
+				return false;
+			}
+
+			$string->set_project($this);
+			if ( $string->exists() ) {
+				$string->update();
+			}
+			else {
+				$string->insert();
+			}
+		}
+	}
+
+	/**
+	 * Import strings from a file
+	 *
+	 * @param string $filename POT file to import from
+	 * @param Language $language Language object, null to use the default language
+	 */
+	public function import_from_file($filename, Language $language = null) {
+		$strings = POMO\import($filename);
+		return $this->import($strings, $language);
+	}
+
+	/**
 	 * Get the post type
 	 *
 	 * @return string
