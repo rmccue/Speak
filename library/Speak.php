@@ -12,6 +12,43 @@ function autoload($class) {
 }
 
 function register() {
+	add_action( 'plugins_loaded', __NAMESPACE__ . '\\check_dependencies', -100 );
+	add_action( 'plugins_loaded', __NAMESPACE__ . '\\default_actions', -50 );
+}
+
+function check_dependencies() {
+	$missing = array();
+	if ( ! defined( 'P2P_PLUGIN_VERSION' ) ) {
+		$missing[] = 'posts-to-posts';
+	}
+
+	if ( ! empty( $missing ) ) {
+		remove_action( 'plugins_loaded', __NAMESPACE__ . '\\default_actions', -50 );
+		add_action( 'admin_notices', function () use ($missing) {
+			missing_dependencies_notice($missing);
+		});
+	}
+}
+
+function missing_dependencies_notice($missing) {
+	$links = array();
+	foreach ($missing as $plugin) {
+		switch ($plugin) {
+			case 'posts-to-posts':
+				$links[] = '<a href="http://wordpress.org/plugins/posts-to-posts/">Posts 2 Posts</a>';
+				break;
+		}
+	}
+
+	echo '<div id="message" class="error">';
+	echo '<p>' . __( 'Speak requires the following plugins, please activate them before using Speak:', 'speak' ) . '</p><ul>';
+	foreach ($links as $link) {
+		echo '<li>' . $link . '</li>';
+	}
+	echo '</ul></div>';
+}
+
+function default_actions() {
 	add_action( 'init', __NAMESPACE__ . '\\register_types' );
 	add_action( 'p2p_init', __NAMESPACE__ . '\\register_relations' );
 }
