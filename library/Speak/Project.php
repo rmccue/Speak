@@ -11,6 +11,15 @@ class Project extends Post {
 		) );
 	}
 
+	/**
+	 * Get the post type
+	 *
+	 * @return string
+	 */
+	protected function post_type() {
+		return static::type();
+	}
+
 	public static function type() {
 		return apply_filters('speak_project_post-type', 'speak-project');
 	}
