@@ -54,6 +54,23 @@ abstract class Post {
 		'content' => 'post_content',
 	);
 
+	/**
+	 * Post connection map (relationship => Post object)
+	 *
+	 * @var array
+	 */
+	protected $connections = array();
+
+	/**
+	 * Post connection cache
+	 *
+	 * This stores the original copy of the connections, so that we only need to
+	 * update changed connections.
+	 *
+	 * @var array
+	 */
+	protected $connection_cache = array();
+
 	public function __construct($post = null) {
 		$this->post = $post;
 
@@ -132,6 +149,47 @@ abstract class Post {
 
 		// Update the internal cache
 		$this->cached_meta = $this->meta;
+
+		return true;
+	}
+
+	protected function get_connected_post($relationship) {
+		if ( isset( $this->connections[ $relationship ] ) ) {
+			return $this->connections[ $relationship ];
+		}
+
+		$query = new WP_Query( array(
+			'connected_type' => $relationship,
+			'connected_items' => $this->post,
+			'numberposts' => 1,
+		) );
+
+		if ( ! $query->have_posts() ) {
+			return null;
+		}
+
+		$connected = post_to_object( $query->get_posts()[0] );
+
+		$this->connections[ $relationship ] = $connected;
+		$this->connection_cache[ $relationship ] = $connected;
+
+		return $connected;
+	}
+
+	protected function set_connected_post($relationship, Post $connected) {
+		$this->connections[$relationship] = $connected;
+	}
+
+	/**
+	 * Update post connections
+	 */
+	protected function update_connections() {
+		$changed = array_diff_assoc($this->connections, $this->connection_cache);
+
+		foreach ($changed as $relationship => $connected) {
+			$type = p2p_type( $relationship );
+			$type->connect( $this->post->ID, $connected->post->ID );
+		}
 
 		return true;
 	}
