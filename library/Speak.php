@@ -50,7 +50,15 @@ function missing_dependencies_notice($missing) {
 
 function default_actions() {
 	add_action( 'init', __NAMESPACE__ . '\\register_types' );
+	add_action( 'init', __NAMESPACE__ . '\\register_taxonomies' );
 	add_action( 'p2p_init', __NAMESPACE__ . '\\register_relations' );
+
+	// UI
+	add_action( 'admin_menu', __NAMESPACE__ . '\\register_menu' );
+	add_action( 'parent_file', __NAMESPACE__ . '\\tax_menu_correction' );
+
+	// Internals
+	add_action( 'save_post', __NAMESPACE__ . '\\Language::set_default_language', 100, 2 );
 }
 
 function register_types() {
@@ -58,22 +66,26 @@ function register_types() {
 
 	// Do we need to register this ourself?
 	if ( ! post_type_exists( $project_type ) ) {
-		register_post_type( 'speak-project', array(
+		$project_type = register_post_type( 'speak-project', array(
 			'label' => __( 'Project', 'speak' ),
 			'public' => true,
 			'hierarchical' => true,
 			'supports' => array( 'title', 'editor', 'thumbnail', 'comments', 'custom-fields', 'revisions', 'page-attributes'),
 			'has_archive' => true,
+			'show_in_menu' => 'speak-menu',
 		) );
+
+		add_action( 'speak_register_menu', function ($parent) use ($project_type) {
+			add_submenu_page(
+				$parent,
+				$project_type->labels->add_new,
+				$project_type->labels->add_new,
+				$project_type->cap->create_posts,
+				sprintf( 'post-new.php?post_type=%s', $project_type->name )
+			);
+		}, 10, 1);
 	}
 
-	register_post_type( 'speak-language', array(
-		'label' => __( 'Language', 'speak' ),
-		'public' => true,
-		'hierarchical' => true,
-		'supports' => array( 'title', 'editor', 'thumbnail', 'comments', 'custom-fields', 'revisions', 'page-attributes'),
-		'has_archive' => true,
-	) );
 	register_post_type( 'speak-string', array(
 		'label' => __( 'String', 'speak' ),
 		'public' => true,
@@ -81,6 +93,24 @@ function register_types() {
 		'show_in_menu' => false,
 		'supports' => array( 'title', 'editor', 'custom-fields', 'comments', 'revisions' ),
 	) );
+}
+
+function register_taxonomies() {
+	$language_tax = register_taxonomy( 'speak-language', 'speak-string', array(
+		'label' => __( 'Language', 'speak' ),
+		'hierarchical' => true,
+	) );
+
+	add_action( 'speak_register_menu', function ($parent) {
+		$language_tax = get_taxonomy( 'speak-language' );
+		add_submenu_page(
+			$parent,
+			$language_tax->labels->menu_name,
+			$language_tax->labels->menu_name,
+			$language_tax->cap->manage_terms,
+			sprintf( "edit-tags.php?taxonomy=%s&amp;post_type=speak-string", $language_tax->name )
+		);
+	}, 10, 1 );
 }
 
 function register_relations() {
@@ -100,22 +130,35 @@ function register_relations() {
 		'to' => 'speak-string',
 		'cardinality' => 'one-to-many',
 	) );
+}
 
-	p2p_register_connection_type( array(
-		'name' => 'speak-language_to_string',
-		'from' => 'speak-language',
-		'to' => 'speak-string',
-		'cardinality' => 'one-to-many'
-	) );
+function register_menu() {
+	add_menu_page(
+		__( 'Speak', 'speak' ),
+		__( 'Speak', 'speak' ),
+		'edit_posts',
+		'speak-menu',
+		__NAMESPACE__ . '\\admin_error'
+	);
+
+	do_action( 'speak_register_menu', 'speak-menu' );
+}
+
+function tax_menu_correction($parent_file) {
+	global $current_screen;
+
+	$taxonomy = $current_screen->taxonomy;
+	if ( $taxonomy == 'speak-language' ) {
+		$parent_file = 'speak-menu';
+	}
+
+	return $parent_file;
 }
 
 function post_to_object($post) {
 	switch ($post->post_type) {
 		case Project::type():
 			return new Project($post);
-
-		case 'speak-language':
-			return new Language($post);
 
 		case 'speak-string':
 			return new String($post);

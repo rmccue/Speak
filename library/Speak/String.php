@@ -56,20 +56,29 @@ class String extends Post {
 		return $this->set_connected_post('speak-project_to_string', $project);
 	}
 
-	public function get_language() {
-		return $this->get_connected_post('speak-language_to_string');
-	}
-
-	public function set_language(Language $language) {
-		return $this->set_connected_post('speak-language_to_string', $language);
-	}
-
 	public function get_base() {
 		return $this->get_connected_post('speak-base_to_translated');
 	}
 
 	public function set_base(String $string) {
 		return $this->set_connected_post('speak-base_to_translated', $string);
+	}
+
+	public function get_language() {
+		$data = wp_get_object_terms( $this->post->ID, Language::type() );
+		if ( is_wp_error( $data ) || empty( $data ) ) {
+			return Language::get_default();
+		}
+
+		return new Language( $data[0] );
+	}
+
+	public function set_language(Language $language) {
+		$result = wp_set_object_terms( $this->post->ID, $language->ID, Language::type() );
+		if ( ! is_array( $result ) ) {
+			return false;
+		}
+		return true;
 	}
 
 	public function is_plural() {
