@@ -14,6 +14,23 @@ abstract class Post {
 	protected $post;
 
 	/**
+	 * Meta values
+	 *
+	 * @var array
+	 */
+	protected $meta = array();
+
+	/**
+	 * Cached meta values
+	 *
+	 * This stores the original copy of the meta values, so that we only need
+	 * to update the changed values.
+	 *
+	 * @var array
+	 */
+	protected $cached_meta = array();
+
+	/**
 	 * Post title
 	 *
 	 * @var string
@@ -72,6 +89,10 @@ abstract class Post {
 			return false;
 		}
 
+		if ( ! $this->update_meta() ) {
+			return false;
+		}
+
 		return true;
 	}
 
@@ -94,6 +115,23 @@ abstract class Post {
 			$post_values['post_type'] = $this->post_type();
 			// wp_update_post( $post_values );
 		}
+
+		if ( ! $this->update_meta() ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function update_meta() {
+		// Update the meta values
+		$changed = array_diff_assoc($this->meta, $this->cached_meta);
+		foreach ($changed as $key => $value) {
+			update_post_meta( $this->post->ID, '_speak_' . $key, $value );
+		}
+
+		// Update the internal cache
+		$this->cached_meta = $this->meta;
 
 		return true;
 	}
