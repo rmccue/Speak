@@ -71,3 +71,18 @@ function register_relations() {
 		'cardinality' => 'one-to-many'
 	) );
 }
+
+function post_to_object($post) {
+	switch ($post->post_type) {
+		case Project::type():
+			return new Project($post);
+
+		case 'speak-language':
+			return new Language($post);
+
+		case 'speak-string':
+			return new String($post);
+	}
+
+	return null;
+}
