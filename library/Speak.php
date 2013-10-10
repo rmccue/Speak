@@ -52,6 +52,9 @@ function register_relations() {
 		'from' => Project::type(),
 		'to' => 'speak-string',
 		'cardinality' => 'one-to-many',
+		'admin_box' => array(
+			'show' => false,
+		),
 	) );
 
 	p2p_register_connection_type( array(
