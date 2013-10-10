@@ -17,13 +17,19 @@ function register() {
 }
 
 function register_types() {
-	register_post_type( 'speak-project', array(
-		'label' => __( 'Project', 'speak' ),
-		'public' => true,
-		'hierarchical' => true,
-		'supports' => array( 'title', 'editor', 'thumbnail', 'comments', 'custom-fields', 'revisions', 'page-attributes'),
-		'has_archive' => true,
-	) );
+	$project_type = Project::type();
+
+	// Do we need to register this ourself?
+	if ( ! post_type_exists( $project_type ) ) {
+		register_post_type( 'speak-project', array(
+			'label' => __( 'Project', 'speak' ),
+			'public' => true,
+			'hierarchical' => true,
+			'supports' => array( 'title', 'editor', 'thumbnail', 'comments', 'custom-fields', 'revisions', 'page-attributes'),
+			'has_archive' => true,
+		) );
+	}
+
 	register_post_type( 'speak-language', array(
 		'label' => __( 'Language', 'speak' ),
 		'public' => true,
@@ -43,7 +49,7 @@ function register_types() {
 function register_relations() {
 	p2p_register_connection_type( array(
 		'name' => 'speak-project_to_string',
-		'from' => 'speak-project',
+		'from' => Project::type(),
 		'to' => 'speak-string',
 		'cardinality' => 'one-to-many',
 	) );
